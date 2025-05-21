@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, addMinutes } from 'date-fns';
+import { format, addMinutes, addDays } from 'date-fns';
 
 export default function TestZohoCalendar() {
     const [result, setResult] = useState(null);
@@ -12,25 +12,35 @@ export default function TestZohoCalendar() {
         setResult(null);
 
         try {
-            // Create a test appointment 1 hour from now
+            // Get current date and time
+            const now = new Date();
+            console.log('Current local time:', now.toString());
+            console.log('Current time zone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+            
+            // Create a test appointment for tomorrow at the same time as now
             const startDateTime = new Date();
-            startDateTime.setHours(startDateTime.getHours() + 1);
+            startDateTime.setDate(startDateTime.getDate() + 1); // Add 1 day (tomorrow)
+            
             // Round to nearest half hour
             startDateTime.setMinutes(Math.ceil(startDateTime.getMinutes() / 30) * 30);
             startDateTime.setSeconds(0);
             startDateTime.setMilliseconds(0);
-
+            
             const endDateTime = addMinutes(startDateTime, 30);
+
+            console.log('Appointment local time:', startDateTime.toString());
+            console.log('Appointment ISO format:', startDateTime.toISOString());
+            console.log('Appointment time (formatted):', format(startDateTime, 'yyyy-MM-dd h:mm a'));
 
             // The test data
             const testData = {
                 startDateTime: startDateTime.toISOString(),
                 endDateTime: endDateTime.toISOString(),
                 customerName: "Test Customer",
-                customerEmail: "test@example.com",
+                customerEmail: "admin@bistrobytes.io",
                 restaurantName: "Test Restaurant",
                 additionalNotes: "This is a test appointment for debugging purposes",
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone // This is your local time zone
             };
 
             console.log('Sending test data:', testData);
@@ -54,7 +64,8 @@ export default function TestZohoCalendar() {
                     message: 'Appointment created successfully!',
                     eventId: data.eventId,
                     startTime: format(startDateTime, 'yyyy-MM-dd HH:mm:ss'),
-                    endTime: format(endDateTime, 'yyyy-MM-dd HH:mm:ss')
+                    endTime: format(endDateTime, 'yyyy-MM-dd HH:mm:ss'),
+                    localTime: startDateTime.toString() // Show the complete local time
                 });
             } else {
                 throw new Error(data.error || 'Unknown error');
@@ -73,7 +84,7 @@ export default function TestZohoCalendar() {
 
             <p className="mb-4 text-gray-600">
                 Click the button below to test creating an appointment in your Zoho Calendar.
-                This will create a test appointment 1 hour from now.
+                This will create a test appointment tomorrow at approximately the current time.
             </p>
 
             <button
@@ -99,7 +110,8 @@ export default function TestZohoCalendar() {
                         <p><strong>Event ID:</strong> {result.eventId}</p>
                         <p><strong>Start Time:</strong> {result.startTime}</p>
                         <p><strong>End Time:</strong> {result.endTime}</p>
-                        <p className="mt-2">Check your Zoho Calendar to verify the appointment was created.</p>
+                        <p><strong>Local Time:</strong> {result.localTime}</p>
+                        <p className="mt-2">Check your Zoho Calendar to verify the appointment was created with the correct time.</p>
                     </div>
                 </div>
             )}
@@ -107,9 +119,9 @@ export default function TestZohoCalendar() {
             <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
                 <p className="font-medium mb-1">Testing Tips:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                    <li>Make sure your serverless function is deployed or running locally.</li>
-                    <li>Check the browser console for detailed logs.</li>
-                    <li>Verify your environment variables are set correctly.</li>
+                    <li>The test creates an appointment for tomorrow at your current local time.</li>
+                    <li>Your current time zone is used for the appointment.</li>
+                    <li>Check the browser console for detailed time information.</li>
                     <li>After testing, you can delete the test appointment from your Zoho Calendar.</li>
                 </ul>
             </div>

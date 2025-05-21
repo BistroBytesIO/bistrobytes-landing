@@ -7,9 +7,9 @@ export default function ZohoAuth() {
     const [error, setError] = useState(null);
 
     // Replace with your actual client credentials from Zoho Developer Console
-    const CLIENT_ID = "1000.CPJ9LCWT54CD2NAHZZ744NUKBDDQKK";
-    const CLIENT_SECRET = "f88f7f2b306c8fc44c62889f4dfd00c74c45733787";
-    const REDIRECT_URI = "http://localhost:5173/zoho-auth"; // Must match your registered redirect URI
+    const CLIENT_ID = process.env.VITE_ZOHO_CLIENT_ID;
+    const CLIENT_SECRET = process.env.VITE_ZOHO_CLIENT_SECRET;
+    const REDIRECT_URI = process.env.VITE_ZOHO_REDIRECT_URI; // Must match your registered redirect URI
 
     // Check for authorization code in URL (after redirect from Zoho)
     useEffect(() => {
