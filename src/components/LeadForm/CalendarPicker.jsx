@@ -1,55 +1,68 @@
 import { useState, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, parseISO, parse, addMinutes, isBefore } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, parse, addMinutes, isBefore } from 'date-fns';
 
-export default function CalendarPicker({ onSubmit, formData }) {
-    // State variables
+export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    // Configuration for available days and times
-    const availableDays = [1, 2, 3, 4, 5]; // Monday to Friday (0 = Sunday, 6 = Saturday)
-    const startTimeAvailable = '09:00'; // 9 AM
-    const endTimeAvailable = '17:00'; // 5 PM
-
-    // Time slots for the selected date (30 minute increments)
     const [timeSlots, setTimeSlots] = useState([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
 
-    // Mock data for unavailable time slots (e.g. from existing appointments)
-    const unavailableTimeSlots = {
-        // Format: 'YYYY-MM-DD': ['HH:MM', 'HH:MM', ...]
-        '2025-05-22': ['10:00', '14:30'],
-        '2025-05-24': ['11:00', '13:00'],
-        '2025-05-29': ['09:00', '09:30', '10:00'],
-    };
+    const availableDays = [1, 2, 3, 4, 5]; // Monday to Friday
 
-    // Calculate time slots when a date is selected
+    // Fetch real availability when a date is selected
     useEffect(() => {
-        if (!selectedDate) return;
-
-        const slots = [];
-        let current = parse(startTimeAvailable, 'HH:mm', new Date());
-        const end = parse(endTimeAvailable, 'HH:mm', new Date());
-
-        while (isBefore(current, end)) {
-            const timeString = format(current, 'HH:mm');
-            const dateString = format(selectedDate, 'yyyy-MM-dd');
-            const isUnavailable = unavailableTimeSlots[dateString]?.includes(timeString);
-
-            slots.push({
-                time: timeString,
-                isAvailable: !isUnavailable
-            });
-
-            current = addMinutes(current, 30);
+        if (!selectedDate) {
+            setTimeSlots([]);
+            return;
         }
 
-        setTimeSlots(slots);
+        const fetchAvailability = async () => {
+            setLoadingSlots(true);
+            try {
+                const dateString = format(selectedDate, 'yyyy-MM-dd');
+                const response = await fetch(`/.netlify/functions/get-availability?date=${dateString}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    setTimeSlots(data.slots);
+                } else {
+                    throw new Error(data.error || 'Failed to fetch availability');
+                }
+            } catch (err) {
+                console.error('Error fetching availability:', err);
+                // Fallback to default time slots if API fails
+                setTimeSlots(generateDefaultTimeSlots());
+            } finally {
+                setLoadingSlots(false);
+            }
+        };
+
+        fetchAvailability();
     }, [selectedDate]);
 
-    // Header with month navigation
+    // Fallback time slot generation
+    const generateDefaultTimeSlots = () => {
+        const slots = [];
+        const startHour = 9;
+        const endHour = 17;
+        
+        for (let hour = startHour; hour < endHour; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+                const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                slots.push({
+                    time: timeString,
+                    isAvailable: true // Default to available if we can't check
+                });
+            }
+        }
+        
+        return slots;
+    };
+
+    // All the render methods remain the same as the previous version...
     const renderHeader = () => {
         return (
             <div className="flex justify-between items-center mb-4">
@@ -76,7 +89,6 @@ export default function CalendarPicker({ onSubmit, formData }) {
         );
     };
 
-    // Days of the week header
     const renderDays = () => {
         const days = [];
         const dateFormat = 'EEEEEE';
@@ -93,7 +105,6 @@ export default function CalendarPicker({ onSubmit, formData }) {
         return <div className="grid grid-cols-7">{days}</div>;
     };
 
-    // Calendar cells
     const renderCells = () => {
         const monthStart = startOfMonth(currentMonth);
         const monthEnd = endOfMonth(monthStart);
@@ -103,16 +114,14 @@ export default function CalendarPicker({ onSubmit, formData }) {
         const rows = [];
         let days = [];
         let day = startDate;
-        let formattedDate = '';
 
         while (day <= endDate) {
             for (let i = 0; i < 7; i++) {
-                formattedDate = format(day, 'd');
+                const formattedDate = format(day, 'd');
                 const dayOfWeek = day.getDay();
                 const cloneDay = new Date(day);
                 const dateString = format(day, 'yyyy-MM-dd');
 
-                // Check if this day is available (weekday) and in current month
                 const isAvailable = availableDays.includes(dayOfWeek) && isSameMonth(day, monthStart);
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
                 const isPast = isBefore(day, new Date()) && !isSameDay(day, new Date());
@@ -133,7 +142,6 @@ export default function CalendarPicker({ onSubmit, formData }) {
                                     }`}
                                 aria-label={`Select ${format(cloneDay, 'MMMM d, yyyy')}`}
                             >
-                                {/* Empty button for full-cell click area */}
                             </button>
                         )}
                         {!isAvailable && (
@@ -156,7 +164,6 @@ export default function CalendarPicker({ onSubmit, formData }) {
         return <div className="mb-6">{rows}</div>;
     };
 
-    // Time slot picker
     const renderTimeSlots = () => {
         if (!selectedDate) return null;
 
@@ -165,31 +172,37 @@ export default function CalendarPicker({ onSubmit, formData }) {
                 <h3 className="font-medium mb-3 text-gray-700">
                     Select a Time for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
                 </h3>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {timeSlots.map(({ time, isAvailable }) => (
-                        <button
-                            key={time}
-                            onClick={() => isAvailable && setSelectedTime(time)}
-                            disabled={!isAvailable}
-                            className={`p-3 rounded text-center relative ${isAvailable
-                                    ? selectedTime === time
-                                        ? 'bg-bistro-primary text-white'
-                                        : 'bg-white hover:bg-gray-100 border border-gray-200'
-                                    : 'cursor-not-allowed'
-                                }`}
-                        >
-                            {format(parse(time, 'HH:mm', new Date()), 'h:mm a')}
-                            {!isAvailable && (
-                                <div className="absolute inset-0 bg-gray-200 opacity-50 rounded"></div>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                
+                {loadingSlots ? (
+                    <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-bistro-primary"></div>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {timeSlots.map(({ time, isAvailable }) => (
+                            <button
+                                key={time}
+                                onClick={() => isAvailable && setSelectedTime(time)}
+                                disabled={!isAvailable}
+                                className={`p-3 rounded text-center relative ${isAvailable
+                                        ? selectedTime === time
+                                            ? 'bg-bistro-primary text-white'
+                                            : 'bg-white hover:bg-gray-100 border border-gray-200'
+                                        : 'cursor-not-allowed bg-gray-100'
+                                    }`}
+                            >
+                                {format(parse(time, 'HH:mm', new Date()), 'h:mm a')}
+                                {!isAvailable && (
+                                    <div className="absolute inset-0 bg-gray-200 opacity-50 rounded"></div>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
         );
     };
 
-    // Handle booking appointment
     const handleBookAppointment = async () => {
         if (!selectedDate || !selectedTime) {
             setError('Please select both a date and time');
@@ -200,73 +213,48 @@ export default function CalendarPicker({ onSubmit, formData }) {
         setIsLoading(true);
 
         try {
-            // Parse selected date and time into a single Date object
             const startDateTime = parse(
                 `${format(selectedDate, 'yyyy-MM-dd')} ${selectedTime}`,
                 'yyyy-MM-dd HH:mm',
                 new Date()
             );
 
-            // End time is 30 minutes later
             const endDateTime = addMinutes(startDateTime, 30);
 
-            console.log('Scheduling appointment:', {
-                startDateTime: startDateTime.toISOString(),
-                endDateTime: endDateTime.toISOString(),
-                customerName: formData.ownerName,
-                customerEmail: formData.email,
-                restaurantName: formData.restaurantName,
-                additionalNotes: formData.biggestChallenge,
-            });
-
-            // For development/testing only
-            // In production, uncomment the API call code below
-            setTimeout(() => {
-                onSubmit({
-                    date: format(selectedDate, 'yyyy-MM-dd'),
-                    time: selectedTime,
-                    eventId: 'mock-event-id'
-                });
-                setIsLoading(false);
-            }, 1000);
-
-            /* In production, use this code instead:
-            
-            // Call the serverless function to create the appointment
             const response = await fetch('/.netlify/functions/create-appointment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                startDateTime: startDateTime.toISOString(),
-                endDateTime: endDateTime.toISOString(),
-                customerName: formData.ownerName,
-                customerEmail: formData.email,
-                restaurantName: formData.restaurantName,
-                additionalNotes: formData.biggestChallenge,
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-              }),
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    startDateTime: startDateTime.toISOString(),
+                    endDateTime: endDateTime.toISOString(),
+                    customerName: formData.ownerName,
+                    customerEmail: formData.email,
+                    restaurantName: formData.restaurantName,
+                    additionalNotes: formData.biggestChallenge,
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                }),
             });
-            
+
             const result = await response.json();
-            
+
             if (!result.success) {
-              throw new Error(result.error || 'Failed to schedule appointment');
+                throw new Error(result.error || 'Failed to schedule appointment');
             }
-            
-            // Call the onSubmit callback with success
+
             onSubmit({
-              date: format(selectedDate, 'yyyy-MM-dd'),
-              time: selectedTime,
-              eventId: result.eventId
+                date: format(selectedDate, 'yyyy-MM-dd'),
+                time: selectedTime,
+                eventId: result.eventId,
+                zoomMeetingId: result.zoomMeetingId,
+                zoomJoinUrl: result.zoomJoinUrl
             });
-            
-            */
 
         } catch (err) {
             console.error('Error booking appointment:', err);
             setError('Failed to schedule appointment. Please try again or contact us directly.');
+        } finally {
             setIsLoading(false);
         }
     };

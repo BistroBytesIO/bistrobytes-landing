@@ -1,9 +1,9 @@
-import logo from '../assets/react.svg';
+import logo from '../assets/bistro_bytes_final_transparent_logo.png';
 
 export default function LandingHeader() {
     return (
         <div className="text-center mb-10">
-            <img src={logo} alt="BistroBytes Logo" className="h-20 mx-auto mb-8" />
+            <img src={logo} alt="BistroBytes Logo" className="h-40 mx-auto mb-8" />
 
             <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
                 Discover How Restaurant Owners Can Boost Revenue By 25% With A Custom Online Ordering System That Eliminates Third-Party Commission Fees Forever

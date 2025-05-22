@@ -4,20 +4,23 @@ import ZohoAuth from "./pages/ZohoAuth";
 import TestZohoCalendar from "./pages/TestZohoCalendar";
 import ZoomAuth from "./pages/ZoomAuth";
 import TestZoomIntegration from "./pages/TestZoomIntegration";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/zoom-auth" element={<ZoomAuth />} />
-        {/* Temporary Zoho auth route - remove after use */}
-        <Route path="/zoho-auth" element={<ZohoAuth />} />
-        {/* Other routes */}
-        <Route path="/test-calendar" element={<TestZohoCalendar />} /> {/* Add this route */}
-        <Route path="/test-zoom" element={<TestZoomIntegration />} /> 
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/zoom-auth" element={<ZoomAuth />} />
+          {/* Temporary auth routes - remove after getting tokens */}
+          <Route path="/zoho-auth" element={<ZohoAuth />} />
+          {/* Testing routes - can remove in production */}
+          <Route path="/test-calendar" element={<TestZohoCalendar />} />
+          <Route path="/test-zoom" element={<TestZoomIntegration />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 
