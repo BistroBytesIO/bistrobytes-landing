@@ -55,13 +55,6 @@ export default function FormModal({ isOpen, onClose, onComplete }) {
         if (onComplete) {
             onComplete();
         }
-        
-        setTimeout(() => {
-            onClose();
-            setCurrentStep('start');
-            setSuccess(false);
-            setAppointmentData(null);
-        }, 10000); // Give user more time to see the success message
     };
 
     const handleClose = () => {

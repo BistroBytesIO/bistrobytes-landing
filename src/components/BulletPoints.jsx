@@ -19,11 +19,11 @@ export default function BulletPoints() {
     ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {points.map((point, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <h3 className="text-xl font-bold text-bistro-primary mb-2">{point.title}</h3>
-                    <p className="text-gray-700">{point.description}</p>
+                <div key={index} className="bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow">
+                    <h3 className="text-lg sm:text-xl font-bold text-bistro-primary mb-2">{point.title}</h3>
+                    <p className="text-gray-700 text-sm sm:text-base">{point.description}</p>
                 </div>
             ))}
         </div>
