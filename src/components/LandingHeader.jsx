@@ -2,13 +2,14 @@ import logo from '../assets/bistro_bytes_final_transparent_logo.png';
 
 export default function LandingHeader() {
     return (
-        <div className="text-center mb-3 sm:mb-4">
-            {/* Logo - Bigger and less padding */}
-            <img src={logo} alt="BistroBytes Logo" className="h-16 sm:h-20 lg:h-24 mx-auto mb-2 sm:mb-3" />
+        <div className="text-center mb-2 sm:mb-0">
+            {/* Logo - Smaller on desktop */}
+            <img src={logo} alt="BistroBytes Logo" className="h-16 sm:h-16 lg:h-20 mx-auto mb-2 sm:mb-1" />
 
-            {/* Main headline - Shortened and more punchy */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight px-2">
-                Boost Restaurant Revenue 25% By Eliminating Third-Party Commission Fees Forever
+            {/* Main headline - With balanced line break */}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 leading-tight px-2">
+                Boost Restaurant Revenue 25% <br className="hidden sm:inline" />
+                By Eliminating Third-Party Commission Fees
             </h1>
 
             {/* Subheadline - More concise */}

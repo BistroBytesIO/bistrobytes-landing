@@ -2,7 +2,6 @@ import { useState } from 'react';
 import LandingHeader from '../components/LandingHeader';
 import VideoSection from '../components/VideoSection';
 import BulletPoints from '../components/BulletPoints';
-import CTAButton from '../components/CTAButton';
 import LimitedAvailability from '../components/LimitedAvailability';
 import FormModal from '../components/LeadForm/FormModal';
 
@@ -18,20 +17,30 @@ const LandingPage = () => {
         setHasCompletedSurvey(true);
     };
 
+    const handleCTAClick = () => {
+        setIsModalOpen(true);
+    };
+
     return (
         <div className="min-h-screen bg-bistro-secondary">
             {/* Above the fold section - Hero + Video */}
             <section className="min-h-screen flex flex-col">
-                <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-                    {/* Header - Compact for mobile */}
-                    <LandingHeader />
+                <div className="flex-1 w-full max-w-full mx-auto px-4 sm:px-4 pt-4 pb-0 sm:py-4">
+                    {/* Header - reduced padding to maximize space */}
+                    <div className="max-w-6xl mx-auto sm:mb-2">
+                        <LandingHeader />
+                    </div>
                     
-                    {/* Video Section - Takes remaining space */}
-                    <div className="flex-1 flex flex-col justify-center">
-                        <VideoSection />
+                    {/* Content Area - full width container */}
+                    <div className="flex-1 flex flex-col justify-center w-full max-w-full">
+                        {/* Video Section with integrated CTA for desktop */}
+                        <VideoSection 
+                            onCTAClick={handleCTAClick} 
+                            hasCompletedSurvey={hasCompletedSurvey} 
+                        />
                         
-                        {/* Primary CTA - Visible above the fold */}
-                        <div className="text-center mt-4 sm:mt-6">
+                        {/* Mobile-only CTA button and Limited Availability */}
+                        <div className="sm:hidden text-center mt-4 max-w-md mx-auto">
                             <button
                                 onClick={() => setIsModalOpen(true)}
                                 disabled={hasCompletedSurvey}
@@ -39,7 +48,7 @@ const LandingPage = () => {
                                     hasCompletedSurvey
                                         ? 'bg-gray-400 cursor-not-allowed text-gray-600'
                                         : 'bg-bistro-primary hover:bg-opacity-90 text-white hover:scale-105'
-                                } font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-full text-lg sm:text-xl shadow-lg transform transition-all w-full sm:w-auto`}
+                                } font-bold py-3 px-6 rounded-full text-lg shadow-lg transform transition-all w-full`}
                             >
                                 {hasCompletedSurvey 
                                     ? 'Thank You! We\'ll Be In Touch Soon' 
