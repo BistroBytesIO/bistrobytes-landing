@@ -109,7 +109,7 @@ async function createZohoEvent(eventData, accessToken, zoomMeeting) {
                 if (email && email.trim()) {
                     attendees.push({
                         email: email.trim(),
-                        status: "ACCEPTED"
+                        status: "NEEDS-ACTION"
                     });
                 }
             });
