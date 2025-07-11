@@ -44,7 +44,6 @@ async function getEvents(accessToken, startDate, endDate) {
         const url = `https://calendar.zoho.com/api/v1/calendars/${ZOHO_CALENDAR_ID}/events`;
         
         // Use correct parameter format from Zoho documentation
-        // The range parameter should be a JSON object with start and end properties
         const rangeObject = {
             start: formattedStartDate,
             end: formattedEndDate
@@ -94,7 +93,7 @@ async function getEvents(accessToken, startDate, endDate) {
     }
 }
 
-// Parse time slots and check availability
+// Parse time slots and check availability with 30-minute future check
 function getAvailableTimeSlots(events, date) {
     console.log(`Processing ${events.length} events for date ${date}`);
     
@@ -102,12 +101,19 @@ function getAvailableTimeSlots(events, date) {
     const startHour = 9; // 9 AM
     const endHour = 17; // 5 PM
     
+    // Get current time for 30-minute future check
+    const now = new Date();
+    const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60000);
+    
     // Generate 30-minute time slots
     for (let hour = startHour; hour < endHour; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
             const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
             const slotStart = new Date(`${date}T${timeString}:00`);
             const slotEnd = new Date(slotStart.getTime() + 30 * 60000); // 30 minutes later
+            
+            // Check if this slot is at least 30 minutes in the future
+            const isInFuture = slotStart >= thirtyMinutesFromNow;
             
             // Check if this slot conflicts with any existing events
             const isConflict = events.some(event => {
@@ -139,7 +145,6 @@ function getAvailableTimeSlots(events, date) {
                     }
                     
                     // Convert slot times to same timezone as events for fair comparison
-                    // For simplicity, we'll compare in local time since we're dealing with same-day appointments
                     const eventDate = eventStart.toDateString();
                     const slotDate = slotStart.toDateString();
                     
@@ -162,9 +167,12 @@ function getAvailableTimeSlots(events, date) {
                 }
             });
             
+            // Slot is available if it's in the future AND doesn't conflict with events
+            const isAvailable = isInFuture && !isConflict;
+            
             availableSlots.push({
                 time: timeString,
-                isAvailable: !isConflict
+                isAvailable: isAvailable
             });
         }
     }
@@ -251,7 +259,7 @@ exports.handler = async (event, context) => {
         // Get events for the requested date (using same date for start and end to get single day)
         const events = await getEvents(accessToken, date, date);
         
-        // Calculate available time slots
+        // Calculate available time slots with 30-minute future check
         const availableSlots = getAvailableTimeSlots(events, date);
         
         return {

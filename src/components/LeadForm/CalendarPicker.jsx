@@ -27,7 +27,28 @@ export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
                 const data = await response.json();
                 
                 if (data.success) {
-                    setTimeSlots(data.slots);
+                    // Filter the slots to ensure they're at least 30 minutes in the future
+                    const now = new Date();
+                    const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60000);
+                    
+                    const filteredSlots = data.slots.map(slot => {
+                        // Create datetime for this slot on the selected date
+                        const slotDateTime = parse(
+                            `${dateString} ${slot.time}`,
+                            'yyyy-MM-dd HH:mm',
+                            new Date()
+                        );
+                        
+                        // Mark as unavailable if it's not at least 30 minutes in the future
+                        const isInFuture = slotDateTime >= thirtyMinutesFromNow;
+                        
+                        return {
+                            ...slot,
+                            isAvailable: slot.isAvailable && isInFuture
+                        };
+                    });
+                    
+                    setTimeSlots(filteredSlots);
                 } else {
                     throw new Error(data.error || 'Failed to fetch availability');
                 }
@@ -43,18 +64,31 @@ export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
         fetchAvailability();
     }, [selectedDate]);
 
-    // Fallback time slot generation
+    // Fallback time slot generation with 30-minute future check
     const generateDefaultTimeSlots = () => {
         const slots = [];
         const startHour = 9;
         const endHour = 17;
+        const now = new Date();
+        const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60000); // 30 minutes from now
         
         for (let hour = startHour; hour < endHour; hour++) {
             for (let minute = 0; minute < 60; minute += 30) {
                 const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                
+                // Create datetime for this slot on the selected date
+                const slotDateTime = parse(
+                    `${format(selectedDate, 'yyyy-MM-dd')} ${timeString}`,
+                    'yyyy-MM-dd HH:mm',
+                    new Date()
+                );
+                
+                // Check if this slot is at least 30 minutes in the future
+                const isAvailable = slotDateTime >= thirtyMinutesFromNow;
+                
                 slots.push({
                     time: timeString,
-                    isAvailable: true // Default to available if we can't check
+                    isAvailable: isAvailable
                 });
             }
         }
@@ -62,7 +96,6 @@ export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
         return slots;
     };
 
-    // All the render methods remain the same as the previous version...
     const renderHeader = () => {
         return (
             <div className="flex justify-between items-center mb-4">
@@ -221,6 +254,9 @@ export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
 
             const endDateTime = addMinutes(startDateTime, 30);
 
+            // Create full name from first and last name
+            const fullName = `${formData.firstName} ${formData.lastName}`;
+
             const response = await fetch('/.netlify/functions/create-appointment', {
                 method: 'POST',
                 headers: {
@@ -229,10 +265,10 @@ export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
                 body: JSON.stringify({
                     startDateTime: startDateTime.toISOString(),
                     endDateTime: endDateTime.toISOString(),
-                    customerName: formData.ownerName,
-                    customerEmail: formData.email,
+                    customerName: fullName,
+                    customerEmail: formData.email, // Now using real email from form
                     restaurantName: formData.restaurantName,
-                    additionalNotes: formData.biggestChallenge,
+                    additionalNotes: `Consultation requested by ${fullName} for ${formData.restaurantName}`,
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
                 }),
             });
@@ -263,8 +299,7 @@ export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
         <div>
             <h2 className="text-xl font-bold mb-4 text-gray-800">Schedule Your Free Consultation</h2>
             <p className="mb-6 text-gray-600">
-                Select a convenient time for a 30-minute Zoom call where we'll discuss your specific needs
-                and show you how BistroBytes can be customized for your restaurant.
+                Select a convenient time for a 30-minute consultation where we'll discuss how BistroBytes can assist with your business website needs.
             </p>
 
             {error && (
@@ -303,7 +338,7 @@ export default function CalendarPickerWithAvailability({ onSubmit, formData }) {
             </button>
 
             <p className="mt-4 text-sm text-gray-500">
-                No payment required. This is a free consultation to explore how BistroBytes can help your restaurant.
+                No payment required. This is a free consultation to explore how BistroBytes can help your business.
             </p>
         </div>
     );

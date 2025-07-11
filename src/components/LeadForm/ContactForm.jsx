@@ -4,9 +4,9 @@ import { useState } from 'react';
 export default function ContactForm({ onSubmit, initialData = {} }) {
     const [formData, setFormData] = useState({
         restaurantName: initialData.restaurantName || '',
-        ownerName: initialData.ownerName || '',
-        email: initialData.email || '',
-        phone: initialData.phone || ''
+        firstName: initialData.firstName || '',
+        lastName: initialData.lastName || '',
+        email: initialData.email || ''
     });
 
     const [errors, setErrors] = useState({});
@@ -37,8 +37,12 @@ export default function ContactForm({ onSubmit, initialData = {} }) {
             newErrors.restaurantName = 'Restaurant name is required';
         }
 
-        if (!formData.ownerName.trim()) {
-            newErrors.ownerName = 'Your name is required';
+        if (!formData.firstName.trim()) {
+            newErrors.firstName = 'First name is required';
+        }
+
+        if (!formData.lastName.trim()) {
+            newErrors.lastName = 'Last name is required';
         }
 
         if (!formData.email.trim()) {
@@ -48,16 +52,6 @@ export default function ContactForm({ onSubmit, initialData = {} }) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.email.trim())) {
                 newErrors.email = 'Please enter a valid email address';
-            }
-        }
-
-        if (!formData.phone.trim()) {
-            newErrors.phone = 'Phone number is required';
-        } else {
-            // Basic phone validation (digits only, at least 10 digits)
-            const phoneDigits = formData.phone.replace(/\D/g, '');
-            if (phoneDigits.length < 10) {
-                newErrors.phone = 'Please enter a valid phone number';
             }
         }
 
@@ -82,68 +76,76 @@ export default function ContactForm({ onSubmit, initialData = {} }) {
                     name="restaurantName"
                     value={formData.restaurantName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border ${errors.restaurantName ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+                    className={`w-full px-3 py-2 border ${errors.restaurantName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-bistro-primary focus:border-transparent`}
+                    placeholder="Enter your restaurant name"
                 />
                 {errors.restaurantName && (
                     <p className="text-red-500 text-xs mt-1">{errors.restaurantName}</p>
                 )}
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                    type="text"
-                    name="ownerName"
-                    value={formData.ownerName}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border ${errors.ownerName ? 'border-red-500' : 'border-gray-300'} rounded-md`}
-                />
-                {errors.ownerName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>
-                )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        className={`w-full px-3 py-2 border ${errors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-bistro-primary focus:border-transparent`}
+                        placeholder="Enter your first name"
+                    />
+                    {errors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        className={`w-full px-3 py-2 border ${errors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-bistro-primary focus:border-transparent`}
+                        placeholder="Enter your last name"
+                    />
+                    {errors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                    )}
+                </div>
             </div>
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email <span className="text-red-500">*</span>
+                    Email Address <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+                    className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-bistro-primary focus:border-transparent`}
+                    placeholder="Enter your email address"
                 />
                 {errors.email && (
                     <p className="text-red-500 text-xs mt-1">{errors.email}</p>
                 )}
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} rounded-md`}
-                    placeholder="(123) 456-7890"
-                />
-                {errors.phone && (
-                    <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-                )}
+                <p className="text-xs text-gray-500 mt-1">
+                    We'll send your Zoom meeting invitation to this email
+                </p>
             </div>
 
             <div className="pt-4">
                 <button
                     type="submit"
-                    className="w-full bg-bistro-primary text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition-colors"
+                    className="w-full bg-bistro-primary text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition-colors focus:outline-none focus:ring-2 focus:ring-bistro-primary focus:ring-offset-2"
                 >
-                    Continue to Questionnaire
+                    Continue to Schedule Consultation
                 </button>
             </div>
         </form>

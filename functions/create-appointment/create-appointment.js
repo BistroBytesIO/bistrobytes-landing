@@ -1,5 +1,4 @@
 // functions/create-appointment/create-appointment.js
-// functions/create-appointment/create-appointment.js
 const axios = require('axios');
 const { format } = require('date-fns');
 
@@ -77,7 +76,6 @@ async function createZohoEvent(eventData, accessToken, zoomMeeting) {
         console.log('Client time zone:', eventData.timeZone);
 
         // Format the dates in Zoho's expected format
-        // Note: UTC format required for Zoho
         const formatZohoDate = (date) => {
             const year = date.getUTCFullYear();
             const month = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -95,7 +93,7 @@ async function createZohoEvent(eventData, accessToken, zoomMeeting) {
         console.log('Zoho start date format:', zohoStartDate);
         console.log('Zoho end date format:', zohoEndDate);
 
-        // Prepare attendees
+        // Prepare attendees - now we always have a real customer email
         const attendees = [
             {
                 email: eventData.customerEmail,
@@ -117,7 +115,7 @@ async function createZohoEvent(eventData, accessToken, zoomMeeting) {
 
         // Create rich text description with properly formatted Zoom info
         let description = `<div>
-            <strong>Demo consultation for BistroBytes online ordering system</strong><br/><br/>
+            <strong>Free consultation for BistroBytes website services</strong><br/><br/>
             <strong>Zoom Meeting Link:</strong> <a href="${zoomMeeting.join_url}">${zoomMeeting.join_url}</a><br/>
             <strong>Meeting ID:</strong> ${zoomMeeting.id}<br/>
             <strong>Passcode:</strong> ${zoomMeeting.password}<br/><br/>
@@ -125,7 +123,7 @@ async function createZohoEvent(eventData, accessToken, zoomMeeting) {
             <strong>Restaurant:</strong> ${eventData.restaurantName}<br/>
             <strong>Email:</strong> ${eventData.customerEmail}<br/><br/>
             <strong>Additional Notes:</strong><br/>
-            ${eventData.additionalNotes || 'N/A'}
+            ${eventData.additionalNotes || 'Free consultation to discuss website needs'}
         </div>`;
 
         // Set the location to the Zoom meeting URL
@@ -134,7 +132,7 @@ async function createZohoEvent(eventData, accessToken, zoomMeeting) {
 
         // Create the Zoho event object
         const zohoEvent = {
-            title: `BistroBytes Demo: ${eventData.restaurantName}`,
+            title: `BistroBytes Consultation: ${eventData.restaurantName}`,
             dateandtime: {
                 timezone: eventData.timeZone,
                 start: zohoStartDate,
@@ -200,13 +198,13 @@ async function createZoomMeeting(meetingData, accessToken) {
 
         // Create meeting data according to Zoom API requirements
         const zoomMeetingData = {
-            topic: `BistroBytes Demo: ${meetingData.restaurantName}`,
+            topic: `BistroBytes Consultation: ${meetingData.restaurantName}`,
             type: 2, // Scheduled meeting
             start_time: startTime,
             duration: durationMinutes,
             timezone: meetingData.timeZone,
-            password: generateRandomPassword(), // Generate a random password
-            agenda: `Demo consultation for BistroBytes online ordering system.\n\nCustomer: ${meetingData.customerName}\nRestaurant: ${meetingData.restaurantName}`,
+            password: generateRandomPassword(),
+            agenda: `Free consultation for BistroBytes website services.\n\nCustomer: ${meetingData.customerName}\nRestaurant: ${meetingData.restaurantName}`,
             settings: {
                 host_video: true,
                 participant_video: true,
@@ -215,7 +213,7 @@ async function createZoomMeeting(meetingData, accessToken) {
                 auto_recording: "none",
                 waiting_room: false,
                 meeting_authentication: false,
-                // Add attendees as meeting invitees
+                // Add both customer and owner emails as meeting invitees
                 meeting_invitees: [
                     { email: meetingData.customerEmail }
                 ].concat(
@@ -226,9 +224,8 @@ async function createZoomMeeting(meetingData, accessToken) {
 
         console.log('Zoom meeting data:', JSON.stringify(zoomMeetingData, null, 2));
 
-        // Create the meeting - note the URL format and userId parameter
-        // For user-level apps, 'me' can be used instead of a specific userId
-        const userId = ZOOM_USER_ID || 'me'; // Default to 'me' if no specific user ID is provided
+        // Create the meeting
+        const userId = ZOOM_USER_ID || 'me';
         const response = await axios({
             method: 'post',
             url: `https://api.zoom.us/v2/users/${userId}/meetings`,
@@ -258,7 +255,6 @@ async function createZoomMeeting(meetingData, accessToken) {
 
 // Helper function to generate a secure random password for Zoom meetings
 function generateRandomPassword() {
-    // Generate a random 6-10 character password with letters and numbers
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
     const length = Math.floor(Math.random() * 5) + 6; // 6-10 characters
     let password = '';
@@ -315,6 +311,15 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(customerEmail)) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Invalid email format' })
+            };
+        }
+
         // Step 1: Get Zoom access token using Server-to-Server OAuth
         const zoomAccessToken = await getZoomAccessToken();
 
@@ -352,7 +357,7 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: true,
-                message: 'Appointment with Zoom meeting scheduled successfully',
+                message: 'Consultation with Zoom meeting scheduled successfully',
                 eventId: result.id,
                 zoomMeetingId: zoomMeeting.id,
                 zoomJoinUrl: zoomMeeting.join_url
