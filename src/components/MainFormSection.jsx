@@ -145,7 +145,7 @@ export default function MainFormSection() {
                             </button>
 
                             <p className="text-sm text-gray-500">
-                                Questions before our meeting? Email us at demo@bistrobytes.io
+                                Questions before our meeting? Email us at info@bistrobytes.io
                             </p>
                         </div>
                     ) : (
